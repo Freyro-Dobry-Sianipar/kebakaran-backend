@@ -5,4 +5,5 @@ joblib
 numpy
 scikit-learn
 pandas
-mysql-connector-python
+PyMySQL
+
