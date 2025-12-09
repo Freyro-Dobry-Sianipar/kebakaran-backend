@@ -24,9 +24,9 @@ MAX_HISTORY = 240
 # MySQL Config (GANTI SESUAI DATABASE KAMU)
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "YOUR_HOST"),
-    "user": os.environ.get("DB_USER", "YOUR_USER"),
-    "password": os.environ.get("DB_PASS", "YOUR_PASSWORD"),
-    "database": os.environ.get("DB_NAME", "YOUR_DATABASE")
+    "user": os.environ.get("DB_USER", "sql_kel8_myiot_fun"),
+    "password": os.environ.get("DB_PASS", "ba3850c13e0388"),
+    "database": os.environ.get("DB_NAME", "iot_data")
 }
 
 app = Flask(__name__)
@@ -214,4 +214,5 @@ def get_commands():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
