@@ -1,5 +1,5 @@
 # ==========================================================
-#  app.py — FINAL RAILWAY VERSION WITH MYSQL SAVE
+#  app.py — FINAL RAILWAY VERSION WITH MYSQL SAVE (PyMySQL + ENV)
 # ==========================================================
 import os
 from datetime import datetime
@@ -9,8 +9,7 @@ import joblib
 import numpy as np
 import csv
 from flask_cors import CORS
-import mysql.connector
-from mysql.connector import Error
+import pymysql  # PyMySQL
 
 # ==========================================================
 # CONFIG
@@ -21,13 +20,17 @@ ENCODER_FILE = "label_encoder.pkl"
 LOG_CSV = "/tmp/fire_data.csv"
 MAX_HISTORY = 240
 
-# MySQL Config (GANTI SESUAI DATABASE KAMU)
+# MySQL Config via Environment Variables Railway
 DB_CONFIG = {
-    "host": os.environ.get("DB_HOST", "YOUR_HOST"),
-    "user": os.environ.get("DB_USER", "sql_kel8_myiot_fun"),
-    "password": os.environ.get("DB_PASS", "ba3850c13e0388"),
-    "database": os.environ.get("DB_NAME", "iot_data")
+    "host": os.environ.get("DB_HOST"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASS"),
+    "database": os.environ.get("DB_NAME"),
+    "cursorclass": pymysql.cursors.DictCursor
 }
+
+if not all(DB_CONFIG.values()):
+    raise Exception("ERROR: DB_HOST, DB_USER, DB_PASS, DB_NAME environment variables must be set!")
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -73,32 +76,26 @@ def append_csv(entry):
 # ==========================================================
 def save_to_mysql(entry):
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-
-        sql = """
-            INSERT INTO iot_data (temperature, humidity, gas, flame, status, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """
-
-        values = (
-            entry["temp"],
-            entry["hum"],
-            entry["gas"],
-            entry["flame"],
-            entry["status"],
-            entry["timestamp"]
-        )
-
-        cursor.execute(sql, values)
-        conn.commit()
-
-    except Error as e:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cursor:
+            sql = """
+                INSERT INTO iot_data (temperature, humidity, gas, flame, status, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            values = (
+                entry["temp"],
+                entry["hum"],
+                entry["gas"],
+                entry["flame"],
+                entry["status"],
+                entry["timestamp"]
+            )
+            cursor.execute(sql, values)
+            conn.commit()
+    except Exception as e:
         print("MySQL Error:", e)
-
     finally:
         try:
-            cursor.close()
             conn.close()
         except:
             pass
@@ -214,5 +211,4 @@ def get_commands():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
 
