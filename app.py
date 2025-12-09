@@ -1,5 +1,5 @@
 # ==========================================================
-#  app.py — FINAL RAILWAY VERSION WITH MYSQL SAVE (PyMySQL + ENV)
+#  app.py — FINAL VERSION WITH MYSQL SAVE (PyMySQL DIRECT CONNECT)
 # ==========================================================
 import os
 from datetime import datetime
@@ -20,17 +20,14 @@ ENCODER_FILE = "label_encoder.pkl"
 LOG_CSV = "/tmp/fire_data.csv"
 MAX_HISTORY = 240
 
-# MySQL Config via Environment Variables Railway
+# MySQL Config langsung ke database eksternal
 DB_CONFIG = {
-    "host": os.environ.get("DB_HOST"),
-    "user": os.environ.get("DB_USER"),
-    "password": os.environ.get("DB_PASS"),
-    "database": os.environ.get("DB_NAME"),
+    "host": "sql-panel.myiot.fun",       # ganti sesuai host db kamu
+    "user": "sql_kel8_myiot_fun",           # ganti username db
+    "password": "ba3850c13e0388",       # ganti password db
+    "database": "iot_data",               # nama database
     "cursorclass": pymysql.cursors.DictCursor
 }
-
-if not all(DB_CONFIG.values()):
-    raise Exception("ERROR: DB_HOST, DB_USER, DB_PASS, DB_NAME environment variables must be set!")
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -106,7 +103,7 @@ def save_to_mysql(entry):
 # ==========================================================
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "Backend Running OK on Railway"})
+    return jsonify({"message": "Backend Running OK"})
 
 
 # ==========================================================
