@@ -1,5 +1,5 @@
 # ==========================================================
-#  app.py — FINAL RAILWAY VERSION (No Pump, Stable)
+#  app.py — FINAL RAILWAY VERSION WITH MYSQL SAVE
 # ==========================================================
 import os
 from datetime import datetime
@@ -9,6 +9,8 @@ import joblib
 import numpy as np
 import csv
 from flask_cors import CORS
+import mysql.connector
+from mysql.connector import Error
 
 # ==========================================================
 # CONFIG
@@ -16,10 +18,16 @@ from flask_cors import CORS
 MODEL_FILE = "model_random_forest.pkl"
 ENCODER_FILE = "label_encoder.pkl"
 
-# Railway has read-only file system EXCEPT /tmp
 LOG_CSV = "/tmp/fire_data.csv"
-
 MAX_HISTORY = 240
+
+# MySQL Config (GANTI SESUAI DATABASE KAMU)
+DB_CONFIG = {
+    "host": os.environ.get("DB_HOST", "YOUR_HOST"),
+    "user": os.environ.get("DB_USER", "YOUR_USER"),
+    "password": os.environ.get("DB_PASS", "YOUR_PASSWORD"),
+    "database": os.environ.get("DB_NAME", "YOUR_DATABASE")
+}
 
 app = Flask(__name__)
 CORS(app, origins="*")
@@ -34,15 +42,17 @@ history = deque(maxlen=MAX_HISTORY)
 # Buzzer state
 buzzer_state = {"mode": "OFF"}  # OFF / WARN / DANGER
 
-# Create CSV in /tmp if not exist
+# Create CSV if not exists
 if not os.path.exists(LOG_CSV):
     with open(LOG_CSV, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["timestamp", "temp", "hum", "gas", "flame", "status"])
 
 
+# ==========================================================
+# CSV LOGGER
+# ==========================================================
 def append_csv(entry):
-    """Append log into /tmp/fire_data.csv"""
     try:
         with open(LOG_CSV, "a", newline="") as f:
             writer = csv.writer(f)
@@ -59,6 +69,42 @@ def append_csv(entry):
 
 
 # ==========================================================
+# MYSQL SAVE
+# ==========================================================
+def save_to_mysql(entry):
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+
+        sql = """
+            INSERT INTO iot_data (temperature, humidity, gas, flame, status, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+
+        values = (
+            entry["temp"],
+            entry["hum"],
+            entry["gas"],
+            entry["flame"],
+            entry["status"],
+            entry["timestamp"]
+        )
+
+        cursor.execute(sql, values)
+        conn.commit()
+
+    except Error as e:
+        print("MySQL Error:", e)
+
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except:
+            pass
+
+
+# ==========================================================
 # ROUTES
 # ==========================================================
 @app.route("/", methods=["GET"])
@@ -66,6 +112,9 @@ def home():
     return jsonify({"message": "Backend Running OK on Railway"})
 
 
+# ==========================================================
+# ML PREDICT FIRE STATUS
+# ==========================================================
 @app.route("/api/predict", methods=["POST"])
 def api_predict():
     data = request.get_json(silent=True) or {}
@@ -93,10 +142,14 @@ def api_predict():
 
     history.append(entry)
     append_csv(entry)
+    save_to_mysql(entry)
 
     return jsonify({"status": status, "entry": entry})
 
 
+# ==========================================================
+# SAVE FROM ESP32 (NO ML MODEL)
+# ==========================================================
 @app.route("/api/save-data", methods=["POST"])
 def api_save():
     data = request.form.to_dict()
@@ -121,10 +174,14 @@ def api_save():
 
     history.append(entry)
     append_csv(entry)
+    save_to_mysql(entry)
 
     return jsonify({"saved": True})
 
 
+# ==========================================================
+# LATEST DATA
+# ==========================================================
 @app.route("/latest", methods=["GET"])
 def latest():
     return jsonify({
@@ -148,9 +205,7 @@ def buzzer_set(mode):
 
 @app.route("/device/commands", methods=["GET"])
 def get_commands():
-    return jsonify({
-        "buzzer": buzzer_state["mode"]
-    })
+    return jsonify({"buzzer": buzzer_state["mode"]})
 
 
 # ==========================================================
