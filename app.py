@@ -25,7 +25,7 @@ DB_CONFIG = {
     "host": "localhost",       # ganti sesuai host db kamu
     "user": "sql_kel8_myiot_fun",           # ganti username db
     "password": "ba3850c13e0388",       # ganti password db
-    "database": "iot_data",               # nama database
+    "database": "sql_kel8_myiot_fun",               # nama database
     "cursorclass": pymysql.cursors.DictCursor
 }
 
@@ -208,5 +208,6 @@ def get_commands():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
