@@ -22,10 +22,11 @@ MAX_HISTORY = 240
 
 # MySQL Config langsung ke database eksternal
 DB_CONFIG = {
-    "host": "mysql.railway.internal",       # ganti sesuai host db kamu
+    "host": "crossover.proxy.rlwy.net",       # ganti sesuai host db kamu
     "user": "root",           # ganti username db
-    "password": "GnqATIqRAPoXWrCwuGUAMdYOGhbJVpXg",       # ganti password db
+    "password": "********",       # ganti password db
     "database": "railway",               # nama database
+     "port": 43524,
     "cursorclass": pymysql.cursors.DictCursor
 }
 
@@ -208,6 +209,7 @@ def get_commands():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
