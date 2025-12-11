@@ -22,10 +22,10 @@ MAX_HISTORY = 240
 
 # MySQL Config langsung ke database eksternal
 DB_CONFIG = {
-    "host": "localhost",       # ganti sesuai host db kamu
-    "user": "sql_kel8_myiot_fun",           # ganti username db
-    "password": "ba3850c13e0388",       # ganti password db
-    "database": "sql_kel8_myiot_fun",               # nama database
+    "host": "mysql.railway.internal",       # ganti sesuai host db kamu
+    "user": "root",           # ganti username db
+    "password": "GnqATIqRAPoXWrCwuGUAMdYOGhbJVpXg",       # ganti password db
+    "database": "railway",               # nama database
     "cursorclass": pymysql.cursors.DictCursor
 }
 
@@ -208,6 +208,7 @@ def get_commands():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
 
 
